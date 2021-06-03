@@ -1,0 +1,16 @@
+[package]
+name = "holomon-server"
+version = "0.1.0"
+authors = ["ZaneStaufer <stauffer_zane@columbusstate.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "holomon-server"
+path = "src/main.rs"
+
+[dependencies]
+warp = "0.3.1"
+tokio = { version = "1", features = ["full"] }
+socket2 = "0.4.0"
+serde = {version = "1.0.126", features = ["derive"]}
