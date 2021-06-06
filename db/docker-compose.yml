@@ -2,13 +2,13 @@ version: "3.8"
 services: 
     mongo:
         image : mongo
-        command: --serviceExecutor adaptive
+        command: mongod
         volumes: 
             - ./data:/data/db
+            - "./mongo-entrypoint/:/docker-entrypoint-initdb.d/"
         container_name: holomon-database
-        environment: 
-            - PUID=1000
-            - PGID=1000
+        env_file:
+            - .env
         ports:
             - 27017:27017
         restart: unless-stopped
