@@ -1,4 +1,6 @@
-use warp::*;
+#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use] extern crate rocket;
+
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use toml::{de::Error};
@@ -8,14 +10,21 @@ extern crate clap;
 use clap::{Arg, App};
 use std::path::Path;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Item {
-    name: String,
-    quantity: i32
-}
+use wither::{prelude::*, Result};
+use wither::bson::{doc, oid::ObjectId};
+use wither::mongodb::Client;
+
+mod routes;
+mod models;
+mod db_connection;
+use crate::routes::app_routes;
+use crate::models::app_models;
+
+
 
 #[tokio::main]
-async fn main(){
+async fn main() -> Result<()>{
+    // Parse CLI args
     let matches = App::new("holomon-server")
         .author("PrivateNomad")
         .about("Server for the Holomon game.")
@@ -35,7 +44,7 @@ async fn main(){
             panic!("Please supply a config toml.");
         }
     };
-
+    // Grab config
     let holomon_config: HashMap<String, String>;
     match read_config(config){
         Ok(c) => {
@@ -45,24 +54,33 @@ async fn main(){
             panic!("There was a problem loading the config.");
         }
     };
-    println!("{:#?}", holomon_config);
 
-    let mut res = HashMap::new();
-    res.insert("test", Item{name: "testaaaa".to_string(), quantity: 20});
+    let db = db_connection::db_connect(
+        holomon_config["db_address"].as_str(),
+        holomon_config["db_user"].as_str(),
+        holomon_config["db_password"].as_str(),
+        holomon_config["db_port"].as_str()
+    ).await?;
 
-    
+    app_models::User::sync(&db).await?;
 
-    let hello = warp::path!("hello")
-        .map(move || {
-            warp::reply::json(&res)
-        });
-    
-    warp::serve(hello)
-        .run(([0, 0, 0, 0], 3030))
-        .await;
+    let mut me = app_models::User{
+        id: None,
+        name: String::from("Zane"),
+        discord_id: String::from("AAFEFFFF")
+    };
+
+    me.save(&db, None).await?;
+
+    // Launch rocket (get it?)
+    rocket::ignite().mount("/", routes![
+        app_routes::hello_world
+    ]).launch();
+
+    Ok(())
 }
 
-fn read_config(path: &str) -> Result<HashMap<String, String>, Error>{
+fn read_config(path: &str) -> std::result::Result<HashMap<String, String>, Error>{
     let mut config = config::Config::default();
     match config.merge(config::File::from(Path::new(path))){
         Ok(_) => {
