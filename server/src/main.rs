@@ -10,75 +10,91 @@ extern crate clap;
 use clap::{Arg, App};
 use std::path::Path;
 
-use wither::{prelude::*, Result};
-use wither::bson::{doc, oid::ObjectId};
-use wither::mongodb::Client;
+#[macro_use]
+extern crate lazy_static;
 
 mod routes;
 mod models;
+mod error;
 mod db_connection;
 use crate::routes::app_routes;
-use crate::models::app_models;
+use crate::models::*;
 
+use mongodb::{Client, options::ClientOptions, Database};
 
+lazy_static!{
+    pub static ref CONFIG: HashMap<String, String> = {
+        let matches = App::new("holomon-server")
+            .author("PrivateNomad")
+            .about("Server for the Holomon game.")
+            .arg(Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .value_name("FILE")
+                .help("Supplies Config.toml")
+                .takes_value(true))
+            .get_matches();
+        let _config: &str;
+        match matches.value_of("config"){
+            Some(c) => {
+                _config = c;
+            }
+            None => {
+                panic!("Please supply a config toml.");
+            }
+        };
+        let holomon_config: HashMap<String, String>;
+        match read_config(_config){
+            Ok(c) => {
+                holomon_config = c;
+            },
+            Err(_) => {
+                panic!("There was a problem loading the config.");
+            }
+        };
+        holomon_config
+    };
+}
 
 #[tokio::main]
-async fn main() -> Result<()>{
-    // Parse CLI args
-    let matches = App::new("holomon-server")
-        .author("PrivateNomad")
-        .about("Server for the Holomon game.")
-        .arg(Arg::with_name("config")
-            .short("c")
-            .long("config")
-            .value_name("FILE")
-            .help("Supplies Config.toml")
-            .takes_value(true))
-        .get_matches();
-    let config: &str;
-    match matches.value_of("config"){
-        Some(c) => {
-            config = c;
-        }
-        None => {
-            panic!("Please supply a config toml.");
-        }
-    };
-    // Grab config
-    let holomon_config: HashMap<String, String>;
-    match read_config(config){
-        Ok(c) => {
-            holomon_config = c;
-        },
-        Err(_) => {
-            panic!("There was a problem loading the config.");
-        }
-    };
+#[launch]
+async fn rocket() -> _ {
+    lazy_static::initialize(&CONFIG);
 
-    let db = db_connection::db_connect(
-        holomon_config["db_address"].as_str(),
-        holomon_config["db_user"].as_str(),
-        holomon_config["db_password"].as_str(),
-        holomon_config["db_port"].as_str()
-    ).await?;
+    let connection_string = format!("mongodb://{username}:{password}@{address}:{port}",
+        address=&CONFIG["db_address"],
+        username=&CONFIG["db_user"],
+        password=&CONFIG["db_password"],
+        port=&CONFIG["db_port"]);
+    let mut cl_options = ClientOptions::parse(connection_string.as_str()).await.unwrap();
+    cl_options.app_name = Some("Holomon-Server".to_string());
+    let db = Client::with_options(cl_options).unwrap().database("holomon");
+    let mut cursor = db.list_collection_names(None).await.unwrap();
+    for collection in cursor{
+        println!("{}", collection);
+    }
 
-    app_models::User::sync(&db).await?;
-
-    let mut me = app_models::User{
-        id: None,
-        name: String::from("Zane"),
-        discord_id: String::from("AAFEFFFF")
-    };
-
-    me.save(&db, None).await?;
-
-    // Launch rocket (get it?)
-    rocket::ignite().mount("/", routes![
-        app_routes::hello_world
-    ]).launch();
-
-    Ok(())
+    rocket::build().mount("/", app_routes::list_routes())
 }
+
+// #[tokio::main]
+// async fn main(){
+//     lazy_static::initialize(&CONFIG);
+    
+//     //let db = db_connection::db_connect(db_options).await?;
+
+//     // models::user::User::sync(&db).await?;
+
+//     // let mut me = models::user::User{
+//     //     id: None,
+//     //     name: String::from("Zane"),
+//     //     discord_id: String::from("AAFEFFFF")
+//     // };
+
+//     // me.save(&db, None).await?;
+
+//     // Launch rocket (get it?)
+// }
 
 fn read_config(path: &str) -> std::result::Result<HashMap<String, String>, Error>{
     let mut config = config::Config::default();

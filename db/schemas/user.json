@@ -1,0 +1,47 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "User",
+    "type": "object",
+    "properties":{
+        "discord_id":{
+            "description": "The user's Discord ID.",
+            "type": "number"
+        },
+        "characters":{
+            "description": "All of the user's characters.",
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "description": "A character.",
+                "type": "object",
+                "required": ["name", "trainer_level", "creation_date", "color"],
+                "properties": {
+                    "name": {
+                        "description": "The character's name or alias.",
+                        "type": "string"
+                    },
+                    "trainer_level": {
+                        "description": "The character's trainer level, as an integer.",
+                        "type": "number"
+                    },
+                    "creation_date": {
+                        "description": "The date the character was registered.",
+                        "type": "number"
+                    },
+                    "color": {
+                        "description": "The character's color. Determines the color of the bot response embeds. Hexcode.",
+                        "type": "string"
+                    },
+                    "collected_holomon": {
+                        "description": "TODO. A collection of the character's owned holomon.",
+                        "type": "array"
+                    },
+                    "past_battles": {
+                        "description": "TODO. A list of references to the character's previous battles that can be played back.",
+                        "type": "array"
+                    }
+                }
+            }
+        }
+    }
+}
