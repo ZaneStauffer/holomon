@@ -5,7 +5,7 @@
     "properties":{
         "discord_id":{
             "description": "The user's Discord ID.",
-            "type": "number"
+            "type": "string"
         },
         "characters":{
             "description": "All of the user's characters.",
@@ -34,6 +34,10 @@
                     },
                     "collected_holomon": {
                         "description": "TODO. A collection of the character's owned holomon.",
+                        "type": "array"
+                    },
+                    "holodex": {
+                        "description": "TODO. A collection of the holomon the character has encountered.",
                         "type": "array"
                     },
                     "past_battles": {

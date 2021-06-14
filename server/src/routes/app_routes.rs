@@ -2,6 +2,7 @@ use rocket::*;
 use rocket::response::status::NotFound;
 use rocket::response::content;
 use rocket::serde::{Serialize, json::Json};
+use rocket::http::Status;
 use std::result::Result;
 use futures::stream::StreamExt;
 
@@ -12,12 +13,19 @@ use mongodb::{
 
 use crate::db_connection::db_connect;
 use crate::models::user::User;
+use crate::error::APIKeyError;
+use crate::routes::guards;
 use crate::CONFIG;
+
+
+
+
 
 pub fn list_routes() -> Vec<Route>{
     routes![
         //hello_world,
-        test
+        test,
+        create_user
     ]
 }
 
@@ -26,6 +34,10 @@ pub fn list_routes() -> Vec<Route>{
 //     let db = db_connect(&CONFIG).await.unwrap();
     
 // }
+#[post("/user/create", format="application/json", /* data="<user>" */)]
+pub async fn create_user(key: guards::ApiKey<'_>/*, validator: Validator*/){
+    println!("success!");
+}
 
 #[get("/test")]
 pub async fn test() -> (){

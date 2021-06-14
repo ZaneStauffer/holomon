@@ -23,3 +23,24 @@ impl From<mongodb::error::Error> for DB_Error{
         DB_Error::new(err.description())
     }
 }
+// API Key Error
+#[derive(Debug, Clone)]
+pub enum APIKeyError{
+    Missing,
+    Invalid
+}
+
+impl Error for APIKeyError{}
+
+impl fmt::Display for APIKeyError{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        match *self{
+            APIKeyError::Missing => {
+                write!(f, "Please supply an API key.")
+            },
+            APIKeyError::Invalid => {
+                write!(f, "The API key is invalid.")
+            }
+        }
+    }
+}
