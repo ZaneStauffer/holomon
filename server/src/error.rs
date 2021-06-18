@@ -44,3 +44,14 @@ impl fmt::Display for APIKeyError{
         }
     }
 }
+// JSON Validation Error
+#[derive(Debug, Clone)]
+pub struct ValidationError{}
+
+impl Error for ValidationError{}
+
+impl fmt::Display for ValidationError{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        write!(f, "JSON validation failed.")
+    }
+}

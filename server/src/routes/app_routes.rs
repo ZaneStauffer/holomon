@@ -13,7 +13,6 @@ use mongodb::{
 
 use crate::db_connection::db_connect;
 use crate::models::user::User;
-use crate::error::APIKeyError;
 use crate::routes::guards;
 use crate::CONFIG;
 
@@ -34,9 +33,9 @@ pub fn list_routes() -> Vec<Route>{
 //     let db = db_connect(&CONFIG).await.unwrap();
     
 // }
-#[post("/user/create", format="application/json", /* data="<user>" */)]
-pub async fn create_user(key: guards::ApiKey<'_>/*, validator: Validator*/){
-    println!("success!");
+#[post("/user/create", format="application/json", data="<user>", /* data="<user>" */)]
+pub async fn create_user(key: guards::ApiKey<'_>, user: Json<User>){
+    println!("{:#?}", user);
 }
 
 #[get("/test")]

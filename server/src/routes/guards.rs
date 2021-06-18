@@ -1,13 +1,13 @@
 use rocket::request::{Request, FromRequest, Outcome};
 use rocket::data::{self, Data, FromData};
 use rocket::http::Status;
-use crate::error::APIKeyError;
+use rocket::serde::{Serialize, json::Json};
+use crate::error::{APIKeyError, ValidationError};
 use crate::CONFIG;
 
 pub struct ApiKey<'r>(&'r str);
-// pub struct JSONValidator<'r>();
+pub struct JSONValidator<'r>(&'r Json<&'r str>);
 
-//Request guard should validate API key and schemas
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for ApiKey<'r>{
     type Error = APIKeyError;
@@ -23,3 +23,11 @@ impl<'r> FromRequest<'r> for ApiKey<'r>{
         }
     }
 }
+
+// #[rocket::async_trait]
+// impl <'r> FromData<'r> for JSONValidator<'r>{
+//     type Error = ValidationError;
+//     async fn from_data(request: &'r Request<'_>, data: Data) -> data::Outcome<Self, ValidationError>{
+//         let limit = request.limits().get("json")
+//     }
+// }
